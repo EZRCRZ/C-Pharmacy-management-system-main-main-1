@@ -39,7 +39,7 @@ RUN npm install && npm audit fix --force && \
     npm run prod
 
 # Copy .env file
-RUN cp .env.example .env
+COPY .env .env
 
 # Generate app key
 RUN php artisan key:generate
