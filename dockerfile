@@ -30,8 +30,13 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
+# Fix Laravel Mix build issues
+ENV NODE_OPTIONS="--max-old-space-size=512"
+
 # Install Node.js dependencies and build assets
-RUN npm install && npm run prod
+RUN npm install && npm audit fix --force && \
+    npx update-browserslist-db@latest && \
+    npm run prod
 
 # Copy .env file
 RUN cp .env.example .env
