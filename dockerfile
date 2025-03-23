@@ -1,4 +1,4 @@
-# Use an official PHP image with Composer and Node.js
+# Use official PHP image with FPM
 FROM php:8.2-fpm
 
 # Install system dependencies
@@ -9,8 +9,10 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
+    libzip-dev \
     mariadb-client \
-    && docker-php-ext-install pdo_mysql gd
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql gd zip
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -26,7 +28,7 @@ WORKDIR /var/www
 COPY . .
 
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 # Install Node.js dependencies and build assets
 RUN npm install && npm run prod
