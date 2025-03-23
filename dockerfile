@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libzip-dev \
     mariadb-client \
+    nginx \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql gd zip
 
@@ -47,8 +48,11 @@ RUN php artisan key:generate
 # Set permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-# Expose port
-EXPOSE 9000
+# Copy Nginx configuration
+COPY ./nginx/default.conf /etc/nginx/sites-available/default
 
-# Start PHP-FPM
-CMD ["php-fpm"]
+# Expose ports for Nginx and PHP-FPM
+EXPOSE 80
+
+# Start both PHP-FPM and Nginx
+CMD service nginx start && php-fpm
