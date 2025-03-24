@@ -35,13 +35,13 @@ RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 ENV NODE_OPTIONS="--max-old-space-size=512"
 
 # Install Node.js dependencies and build assets
-RUN npm install && npm run dev
+RUN npm install && npm run prod
 
 # Generate Laravel app key
 RUN php artisan key:generate
 
 # Ensure storage is linked correctly
-RUN php artisan serve
+RUN php artisan storage:link
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache /var/www/public && \
