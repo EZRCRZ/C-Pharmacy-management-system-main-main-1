@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        if (config('app.env') !== 'local') {
+            URL::forceScheme('https');
+        }
+
+        // Allow mixed content by forcing HTTP requests to upgrade to HTTPS
+        header("Content-Security-Policy: upgrade-insecure-requests");
     }
 }
