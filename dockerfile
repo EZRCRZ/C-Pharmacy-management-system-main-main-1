@@ -18,10 +18,9 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install Node.js (18.x)
+# Install Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install -g npm@latest
+    apt-get install -y nodejs
 
 # Set working directory
 WORKDIR /var/www
@@ -32,27 +31,28 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-# Set Node.js options to avoid memory issues
+# Fix Laravel Mix build issues
 ENV NODE_OPTIONS="--max-old-space-size=512"
 
 # Install Node.js dependencies and build assets
-RUN npm install && \
-    npm run production
-
-# Copy .env file
-COPY .env .env
+RUN npm install && npm run prod
 
 # Generate Laravel app key
 RUN php artisan key:generate
 
-# Ensure storage and cache directories are writable
-RUN chmod -R 777 storage bootstrap/cache
+# Ensure storage is linked correctly
+RUN php artisan storage:link
 
-# Copy Nginx configuration
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache /var/www/public && \
+    chmod -R 775 /var/www/storage /var/www/bootstrap/cache /var/www/public
+
+# Copy Nginx configuration and enable site
 COPY ./nginx/default.conf /etc/nginx/sites-available/default
+RUN ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
 # Expose ports for Nginx and PHP-FPM
 EXPOSE 80
 
-# Start both PHP-FPM and Nginx
-CMD service nginx start && php-fpm
+# Start both PHP-FPM and Nginx properly
+CMD ["sh", "-c", "nginx && php-fpm"]
