@@ -35,9 +35,7 @@ RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 ENV NODE_OPTIONS="--max-old-space-size=512"
 
 # Install Node.js dependencies and build assets
-RUN npm install && npm audit fix --force && \
-    npx update-browserslist-db@latest && \
-    npm run prod
+RUN npm install && npm run build
 
 # Copy .env file
 COPY .env .env
@@ -46,13 +44,15 @@ COPY .env .env
 RUN php artisan key:generate
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache && \
+    chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Copy Nginx configuration
+# Copy Nginx configuration and enable site
 COPY ./nginx/default.conf /etc/nginx/sites-available/default
+RUN ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
 # Expose ports for Nginx and PHP-FPM
 EXPOSE 80
 
-# Start both PHP-FPM and Nginx
-CMD service nginx start && php-fpm
+# Start both PHP-FPM and Nginx properly
+CMD ["sh", "-c", "nginx && php-fpm"]
